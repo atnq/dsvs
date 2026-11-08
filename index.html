@@ -278,7 +278,7 @@ function frameDoc(m){
     body=body.split("cid:"+cid).join(u);
   }
   const csp=`default-src 'none'; img-src data: ${location.origin}/api/attachment; style-src 'unsafe-inline'`;
-  return `<meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank"><style>body{font:14px system-ui,sans-serif;margin:14px;color:#111}img{max-width:100%;height:auto}</style>`+body;
+  return `<meta http-equiv="Content-Security-Policy" content="${csp}"><meta name="referrer" content="no-referrer"><base target="_blank"><style>body{font:14px system-ui,sans-serif;margin:14px;color:#111}img{max-width:100%;height:auto}</style>`+body;
 }
 function renderAll(){
   $("cnt").textContent=msgs.length;
@@ -305,7 +305,7 @@ function renderAll(){
   read.innerHTML=`<h2>${esc(m.subject||"(sans objet)")}</h2><div class="meta">De ${esc(m.from)} · ${esc(new Date(m.date).toLocaleString("fr-FR"))}</div>`;
   if(m.bodyContentType==="html"){
     const f=document.createElement("iframe");
-    f.setAttribute("sandbox","allow-same-origin allow-popups");
+    f.setAttribute("sandbox","allow-same-origin allow-popups allow-popups-to-escape-sandbox");
     f.srcdoc=frameDoc(m);
     f.onload=()=>{try{f.style.height=f.contentDocument.documentElement.scrollHeight+"px"}catch{}};
     read.appendChild(f);
