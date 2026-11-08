@@ -163,13 +163,12 @@ foot,.foot{display:block;padding:0 0 40px;color:var(--mut);font-size:.85rem}
 </section>
 
 <section class="stats" aria-label="Chiffres">
-  <div class="stat"><span>Messages reçus au total</span><strong id="recv">—</strong><small>sur tout le service</small></div>
+  <div class="stat"><span>Messages reçus au total</span><strong id="recv">—</strong></div>
   <div class="stat"><span>Adresses possibles</span><strong id="avail">—</strong><small id="brk">&nbsp;</small></div>
 </section>
 
 <div class="tabs" role="tablist">
   <button class="tab" role="tab" id="t-inbox" aria-selected="true" data-p="p-inbox">Boîte de réception <em id="cnt">0</em></button>
-  <button class="tab" role="tab" id="t-list" aria-selected="false" data-p="p-list">Liste a.txt</button>
   <button class="tab" role="tab" id="t-arch" aria-selected="false" data-p="p-arch" hidden>Archive</button>
 </div>
 
@@ -180,23 +179,9 @@ foot,.foot{display:block;padding:0 0 40px;color:var(--mut);font-size:.85rem}
   </div>
 </section>
 
-<section class="panel" id="p-list" role="tabpanel" hidden>
-  <div class="pad row">
-    <button class="btn main" id="scan" type="button">Compter les mails</button>
-    <progress id="p" value="0" max="1"></progress>
-    <span class="small" id="ast"></span>
-  </div>
-  <div class="pad" style="padding-top:0"><span class="small" id="atotal">Une adresse par ligne dans a.txt.</span></div>
-  <div class="tw"><table>
-    <thead><tr><th>Mails</th><th>Adresse</th><th>Dernier message</th></tr></thead>
-    <tbody id="rows"><tr><td colspan="3" class="small">Cliquez sur « Compter les mails ».</td></tr></tbody>
-  </table></div>
-</section>
-
 <section class="panel" id="p-arch" role="tabpanel" hidden>
   <div class="pad">
     <p style="margin:0 0 6px"><strong id="archcnt"></strong></p>
-    <p class="small" style="margin:0 0 18px">Les mails relevés sont enregistrés automatiquement dans votre base Postgres.</p>
     <div class="row">
       <a class="btn" href="/api/archive/export?format=csv" download>Exporter en CSV</a>
       <a class="btn" href="/api/archive/export?format=json" download>Exporter en JSON</a>
@@ -204,7 +189,6 @@ foot,.foot{display:block;padding:0 0 40px;color:var(--mut);font-size:.85rem}
   </div>
 </section>
 
-<p class="foot">ak47mail · boîtes fournies par l'API temp.tf</p>
 </div>
 
 <script>
@@ -346,27 +330,7 @@ async function loadArchive(){
   }catch{}
 }
 
-/* ---------- liste a.txt ---------- */
-let st=null;
-async function refreshList(){
-  const s=await api("/api/state");
-  $("atotal").textContent=`${s.total_msgs} mails sur ${s.addresses} adresses`;
-  $("p").max=Math.max(s.total,1);$("p").value=s.done;
-  $("scan").disabled=s.running;
-  $("ast").textContent=s.running?`${s.done} sur ${s.total}`:(s.total?"Terminé":"");
-  if(s.rows.length)$("rows").innerHTML=s.rows.map(r=>{
-    const c=r.error?'<span class="err">!</span>':(r.count??"…");
-    const l=r.error?`<span class="err">${esc(r.error)}</span>`
-      :(r.last_subject?`${esc(r.last_subject)}<br><span class="small">${esc(r.last_from)}</span>`:'<span class="small">—</span>');
-    return `<tr><td class="n">${c}</td><td class="e">${esc(r.email)}</td><td>${l}</td></tr>`}).join("");
-  if(!s.running&&st){clearInterval(st);st=null}
-}
-$("scan").onclick=async()=>{
-  try{await api("/api/scan",{method:"POST"})}catch{}
-  if(!st)st=setInterval(refreshList,1500); refreshList();
-};
-
 /* ---------- démarrage ---------- */
 try{const a=localStorage.getItem("addr");if(a){setAddr(a);renderAll();fetchInbox()}else renderAll()}catch{renderAll()}
-loadStats(); refreshList(); loadArchive(); schedule();
+loadStats(); loadArchive(); schedule();
 </script></body></html>
