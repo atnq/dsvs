@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon tempmail</title>
+<style>
+:root{
+  --bg:#03060f; --panel:#060b17; --line:#1a2433; --line2:#0f3d36;
+  --fg:#e8edf5; --mut:#7a879a; --acc:#2de2a6; --accbg:#0a3b30; --err:#ff7a6b;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"Space Grotesk",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--fg);font:15px/1.5 var(--sans);min-height:100vh;
+  background:
+    radial-gradient(900px 500px at 105% 55%,rgba(45,226,166,.10),transparent 60%),
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/24px 24px,
+    var(--bg)}
+main{max-width:984px;margin:0 auto;padding:32px 20px 80px}
+header{display:flex;align-items:center;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:24px}
+header b{font-size:1.2rem}
+header span{color:var(--mut);font-size:.9rem}
+header .on{color:var(--acc)}
+header em{margin-left:auto;font:.7rem var(--mono);border:1px solid var(--line);color:var(--mut);padding:2px 8px;border-radius:3px;font-style:normal}
+.panel{background:var(--panel);border:1px solid var(--line);margin-bottom:20px}
+.panel.main{border-color:var(--line2);box-shadow:0 0 0 1px rgba(45,226,166,.06) inset}
+.pad{padding:20px}
+.lbl{font:.72rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.addr{display:flex;gap:8px;margin:10px 0 18px}
+.addr input{flex:1;min-width:0;background:#040810;border:1px solid var(--line);color:var(--fg);font:.95rem var(--mono);padding:12px 14px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.icon{width:46px;background:#040810;border:1px solid var(--line);color:var(--fg);cursor:pointer}
+.icon:hover{border-color:var(--acc)}
+label.chk{display:inline-flex;align-items:center;gap:7px;font:.9rem var(--mono);cursor:pointer}
+input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
+.opts{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.btn{font:.8rem var(--mono);letter-spacing:.12em;text-transform:uppercase;background:transparent;color:var(--fg);border:1px solid var(--line);padding:12px 18px;cursor:pointer}
+.btn:hover{border-color:var(--mut)}
+.btn.go{background:var(--accbg);border-color:var(--acc);color:var(--acc)}
+.btn:disabled{opacity:.5;cursor:default}
+a.btn{text-decoration:none;display:inline-block}
+details{margin-top:18px}
+summary{cursor:pointer;color:var(--mut);font:.75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;list-style:none}
+summary::before{content:"› ";}
+details[open] summary::before{content:"⌄ "}
+.rec{display:flex;gap:8px;margin-top:10px}
+.rec input{flex:1;background:#040810;border:1px solid var(--line);color:var(--fg);font:.9rem var(--mono);padding:10px 12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.stats .panel{margin:0}
+.big{font-size:1.6rem;font-weight:700;margin:6px 0 2px}
+.big.acc{color:var(--acc)}
+.small{font:.72rem/1.7 var(--mono);color:var(--mut)}
+.head{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.head .lbl{color:var(--fg)}
+.head .cnt{margin-left:auto;font:.75rem var(--mono);color:var(--mut)}
+.empty{text-align:center;padding:64px 20px;color:var(--mut)}
+.empty b{display:block;color:var(--mut);font:.9rem var(--mono);margin:8px 0 4px}
+.empty small{font:.75rem var(--mono)}
+.msg{border-bottom:1px solid var(--line)}
+.msg:last-child{border-bottom:0}
+.mh{display:grid;grid-template-columns:1fr auto;gap:2px 16px;padding:14px 20px;cursor:pointer;width:100%;background:none;border:0;color:inherit;text-align:left;font:inherit}
+.mh:hover{background:rgba(255,255,255,.03)}
+.mh .s{font-weight:600}
+.mh .f{color:var(--mut);font:.8rem var(--mono);overflow-wrap:anywhere}
+.mh .d{color:var(--mut);font:.75rem var(--mono);grid-row:1;grid-column:2}
+.mb{padding:0 20px 18px}
+.mb iframe{width:100%;border:0;background:#fff;min-height:120px;display:block}
+.mb pre{white-space:pre-wrap;font:.85rem var(--mono);background:#040810;border:1px solid var(--line);padding:14px;margin:0}
+.att{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.att a{font:.8rem var(--mono);color:var(--acc);border:1px solid var(--line2);padding:5px 10px;text-decoration:none}
+.err{color:var(--err)}
+.note{font:.8rem var(--mono);color:var(--err);margin-top:10px;min-height:1.2em}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 20px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.9rem}
+th{font:.72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:400}
+td.n{font:700 1rem var(--mono);width:80px}
+td.e{font-family:var(--mono);overflow-wrap:anywhere}
+tr:last-child td{border-bottom:0}
+progress{flex:1;min-width:120px;height:6px;accent-color:var(--acc)}
+.tw{overflow-x:auto}
+@media (max-width:640px){.stats{grid-template-columns:1fr}.mh{grid-template-columns:1fr}.mh .d{grid-row:auto;grid-column:1}}
+</style></head><body><main>
+
+<header><b>mon tempmail</b><span class="on">Email</span><em>local</em></header>
+
+<section class="panel main"><div class="pad">
+  <div class="lbl">Adresse temporaire</div>
+  <div class="addr">
+    <input id="addr" readonly placeholder="Cliquez sur « Nouvelle adresse »" aria-label="Adresse temporaire">
+    <button class="icon" id="copy" title="Copier" aria-label="Copier l'adresse">⧉</button>
+  </div>
+  <div class="opts"><span class="lbl">Fournisseurs</span>
+    <label class="chk"><input type="checkbox" class="prov" value="outlook" checked>outlook.com</label>
+    <label class="chk"><input type="checkbox" class="prov" value="hotmail" checked>hotmail.com</label>
+    <label class="chk"><input type="checkbox" class="prov" value="gmail" checked>gmail.com</label>
+  </div>
+  <div class="opts"><span class="lbl">Syntaxes</span>
+    <label class="chk"><input type="checkbox" id="dot" checked>dot</label>
+    <label class="chk"><input type="checkbox" id="plus" checked>plus</label>
+    <label class="chk" style="margin-left:auto"><input type="checkbox" id="auto" checked>actualiser (10 s)</label>
+  </div>
+  <div class="row">
+    <button class="btn" id="new">↻ Nouvelle adresse</button>
+    <button class="btn go" id="fetch">⬓ Relever la boîte</button>
+  </div>
+  <div class="note" id="note"></div>
+  <details><summary>Récupérer une adresse</summary>
+    <div class="rec">
+      <input id="rec" placeholder="user+abc123@gmail.com" aria-label="Adresse à récupérer">
+      <button class="btn" id="recgo">Charger</button>
+    </div>
+  </details>
+</div></section>
+
+<div class="stats">
+  <section class="panel pad"><div class="lbl">Total reçu</div><div class="big" id="recv">—</div><div class="small">messages</div></section>
+  <section class="panel pad"><div class="lbl">Total disponible</div><div class="big acc" id="avail">—</div><div class="small" id="brk">adresses</div></section>
+</div>
+
+<section class="panel">
+  <div class="head"><span>⬓</span><span class="lbl">Boîte de réception</span><span class="cnt" id="cnt">aucun message</span></div>
+  <div id="inbox"><div class="empty"><b>Aucun mail</b><small>Relevez la boîte pour charger les messages.</small></div></div>
+</section>
+
+<section class="panel" id="arch" hidden>
+  <div class="head"><span class="lbl">Archive Postgres</span><span class="cnt" id="archcnt"></span></div>
+  <div class="pad row">
+    <a class="btn" href="/api/archive/export?format=csv" download>Exporter CSV</a>
+    <a class="btn" href="/api/archive/export?format=json" download>Exporter JSON</a>
+    <span class="small">Les mails relevés sont enregistrés automatiquement.</span>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="head"><span class="lbl">Liste a.txt</span><span class="cnt" id="atotal"></span></div>
+  <div class="pad row">
+    <button class="btn go" id="scan">Compter les mails</button>
+    <progress id="p" value="0" max="1"></progress>
+    <span class="small" id="ast"></span>
+  </div>
+  <div class="tw"><table><thead><tr><th>Mails</th><th>Adresse</th><th>Dernier message</th></tr></thead>
+  <tbody id="rows"><tr><td colspan="3" class="small">Une adresse par ligne dans a.txt, puis « Compter les mails ».</td></tr></tbody></table></div>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let current="", open=new Set(), timer=null;
+
+function opts(){
+  const p=new URLSearchParams();
+  if($("dot").checked)p.set("dot","1");
+  if($("plus").checked)p.set("plus","1");
+  const prov=[...document.querySelectorAll(".prov:checked")].map(x=>x.value);
+  if(prov.length)p.set("providers",prov.join(","));
+  return p;
+}
+function note(t){$("note").textContent=t||""}
+async function api(url,init){
+  const r=await fetch(url,init); let j={};
+  try{j=await r.json()}catch{}
+  if(!r.ok){
+    const w=r.headers.get("Retry-After");
+    throw new Error(j.error||("erreur "+r.status)+(w?` — réessayez dans ${w} s`:""));
+  }
+  return j;
+}
+function setAddr(a){
+  current=a; $("addr").value=a; open.clear();
+  try{localStorage.setItem("addr",a)}catch{}
+}
+
+async function loadStats(){
+  try{
+    const s=await api("/api/stats?"+opts());
+    $("recv").textContent=s.totalReceived??"—";
+    $("avail").textContent=s.totalFormatted??"—";
+    const b=s.breakdownFormatted||{};
+    $("brk").textContent=Object.entries(b).filter(([,v])=>v!=="0").map(([k,v])=>`${k} ${v}`).join("  ")+"  adresses";
+  }catch{}
+}
+
+async function newAddr(){
+  note("");
+  try{
+    const j=await api("/api/account?"+opts());
+    setAddr(j.email); await fetchInbox();
+  }catch(e){note(e.message)}
+}
+
+async function fetchInbox(){
+  if(!current){note("Générez ou chargez d'abord une adresse.");return}
+  note("");
+  try{
+    const j=await api("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:current})});
+    render(j.data||[]); loadArchive();
+    if(j.totalReceived!=null)$("recv").textContent=j.totalReceived;
+  }catch(e){note(e.message)}
+}
+
+function frameDoc(m){
+  let body=m.body||"";
+  for(const [cid,att] of Object.entries(m.inlineCids||{})){
+    const u=`${location.origin}/api/attachment?`+new URLSearchParams({email:current,messageId:m.id,attachmentId:att});
+    body=body.split("cid:"+cid).join(u);
+  }
+  const csp=`default-src 'none'; img-src data: ${location.origin}/api/attachment; style-src 'unsafe-inline'`;
+  return `<meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank"><style>body{font:14px system-ui,sans-serif;margin:12px;color:#111}img{max-width:100%;height:auto}</style>`+body;
+}
+
+function render(msgs){
+  $("cnt").textContent=msgs.length?`${msgs.length} message${msgs.length>1?"s":""}`:"aucun message";
+  const box=$("inbox");
+  if(!msgs.length){box.innerHTML='<div class="empty"><b>Aucun mail</b><small>La boîte est vide pour cette adresse.</small></div>';return}
+  box.innerHTML="";
+  for(const m of msgs){
+    const el=document.createElement("div"); el.className="msg";
+    const head=document.createElement("button"); head.className="mh";
+    head.innerHTML=`<span class="s">${esc(m.subject||"(sans objet)")}</span><span class="d">${esc(new Date(m.date).toLocaleString("fr-FR"))}</span><span class="f">${esc(m.from)}</span>`;
+    const body=document.createElement("div"); body.className="mb"; body.hidden=!open.has(m.id);
+    const fill=()=>{
+      if(body.dataset.done)return; body.dataset.done=1;
+      if(m.bodyContentType==="html"){
+        const f=document.createElement("iframe");
+        f.setAttribute("sandbox","allow-same-origin allow-popups");
+        f.srcdoc=frameDoc(m);
+        f.onload=()=>{try{f.style.height=f.contentDocument.documentElement.scrollHeight+"px"}catch{}};
+        body.appendChild(f);
+      }else{const pre=document.createElement("pre");pre.textContent=m.body||"";body.appendChild(pre)}
+      if((m.attachments||[]).length){
+        const a=document.createElement("div");a.className="att";
+        a.innerHTML=m.attachments.map(x=>{
+          const u="/api/attachment?"+new URLSearchParams({email:current,messageId:m.id,attachmentId:x.id});
+          return `<a href="${u}" download>${esc(x.name)} (${Math.max(1,Math.round(x.size/1024))} Ko)</a>`}).join("");
+        body.appendChild(a);
+      }
+    };
+    if(!body.hidden)fill();
+    head.onclick=()=>{body.hidden=!body.hidden;body.hidden?open.delete(m.id):(open.add(m.id),fill())};
+    el.append(head,body); box.appendChild(el);
+  }
+}
+
+function schedule(){
+  clearInterval(timer);
+  if($("auto").checked)timer=setInterval(()=>{if(current&&!document.hidden)fetchInbox()},10000);
+}
+
+$("new").onclick=newAddr;
+$("fetch").onclick=fetchInbox;
+$("auto").onchange=schedule;
+$("copy").onclick=async()=>{
+  if(!current)return;
+  try{await navigator.clipboard.writeText(current);$("copy").textContent="✓";setTimeout(()=>$("copy").textContent="⧉",1200)}catch{$("addr").select()}
+};
+$("recgo").onclick=()=>{const v=$("rec").value.trim();if(v){setAddr(v);fetchInbox()}};
+$("rec").onkeydown=e=>{if(e.key==="Enter")$("recgo").click()};
+
+// ---- liste a.txt ----
+let st=null;
+async function refreshList(){
+  const s=await api("/api/state");
+  $("atotal").textContent=`${s.total_msgs} mails sur ${s.addresses} adresses`;
+  $("p").max=Math.max(s.total,1);$("p").value=s.done;
+  $("scan").disabled=s.running;
+  $("ast").textContent=s.running?`${s.done} / ${s.total}`:(s.total?"Terminé":"");
+  if(s.rows.length)$("rows").innerHTML=s.rows.map(r=>{
+    const c=r.error?'<span class="err">!</span>':(r.count??"…");
+    const l=r.error?`<span class="err">${esc(r.error)}</span>`:(r.last_subject?`${esc(r.last_subject)}<br><span class="small">${esc(r.last_from)}</span>`:'<span class="small">—</span>');
+    return `<tr><td class="n">${c}</td><td class="e">${esc(r.email)}</td><td>${l}</td></tr>`}).join("");
+  if(!s.running&&st){clearInterval(st);st=null}
+}
+$("scan").onclick=async()=>{
+  try{await api("/api/scan",{method:"POST"})}catch{}
+  if(!st)st=setInterval(refreshList,1500); refreshList();
+};
+
+async function loadArchive(){
+  try{
+    const a=await api("/api/archive/stats");
+    if(!a.enabled)return;
+    $("arch").hidden=false;
+    $("archcnt").textContent=a.error?"erreur base de données":`${a.messages} mails, ${a.addresses} adresses`;
+  }catch{}
+}
+try{const a=localStorage.getItem("addr");if(a){setAddr(a);fetchInbox()}}catch{}
+loadStats(); refreshList(); loadArchive(); schedule();
+</script></body></html>
