@@ -1,5 +1,5 @@
 """
-Mon tempmail — interface de boîte jetable branchée sur l'API temp.tf (sans pub).
+ak47mail — interface de boîte jetable branchée sur l'API temp.tf (sans pub).
 
 Lancer :  pip install -r requirements.txt && python app.py
 Ouvrir :  http://127.0.0.1:5000
@@ -40,7 +40,7 @@ def require_password():
     if auth and hmac.compare_digest((auth.password or "").encode(), PASSWORD.encode()):
         return None
     return Response("Mot de passe requis", 401,
-                    {"WWW-Authenticate": 'Basic realm="Mon tempmail"'})
+                    {"WWW-Authenticate": 'Basic realm="ak47mail"'})
 
 
 # ---------- archivage dans Postgres (optionnel) ----------
