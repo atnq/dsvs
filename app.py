@@ -1,8 +1,5 @@
 """
-ak47mail — interface de boîte jetable.
-
-L'adresse de l'API de messagerie se règle avec la variable d'environnement MAIL_API
-(Render : onglet Environment ; en local : export MAIL_API=...).
+ak47mail — interface de boîte jetable branchée sur l'API temp.tf (sans pub).
 
 Lancer :  pip install -r requirements.txt && python app.py
 Ouvrir :  http://127.0.0.1:5000
@@ -12,15 +9,21 @@ import hmac
 import io
 import json
 import os
+import threading
+import time
 from pathlib import Path
 
 import requests
 from flask import Flask, Response, jsonify, request, send_file
 
-API = os.environ.get("MAIL_API", "").rstrip("/")
+API = "https://temp.tf/api"
 HERE = Path(__file__).parent
+FILE = HERE / "a.txt"
+DELAY = 1.2  # secondes entre deux requêtes pour le comptage a.txt (limite : 60/min)
 
 app = Flask(__name__)
+lock = threading.Lock()
+state = {"running": False, "done": 0, "total": 0, "results": {}}
 
 
 # ---------- protection par mot de passe (optionnelle) ----------
@@ -137,14 +140,12 @@ def archive_export():
                     headers={"Content-Disposition": "attachment; filename=mails.csv"})
 
 
-# ---------- proxy vers l'API de messagerie ----------
+# ---------- proxy vers temp.tf ----------
 def relay(method, path, **kw):
-    if not API:
-        return jsonify(error="MAIL_API non configurée"), 500
     try:
         r = requests.request(method, f"{API}{path}", timeout=25, **kw)
     except requests.RequestException as e:
-        return jsonify(error=f"service injoignable ({e.__class__.__name__})"), 502
+        return jsonify(error=f"temp.tf injoignable ({e.__class__.__name__})"), 502
     try:
         body = r.json()
     except ValueError:
@@ -177,18 +178,91 @@ def check():
 
 @app.get("/api/attachment")
 def attachment():
-    if not API:
-        return jsonify(error="MAIL_API non configurée"), 500
     try:
         r = requests.get(f"{API}/attachment", params=request.args, timeout=60)
     except requests.RequestException:
-        return jsonify(error="service injoignable"), 502
+        return jsonify(error="temp.tf injoignable"), 502
     headers = {"X-Content-Type-Options": "nosniff"}
     if "Content-Disposition" in r.headers:
         headers["Content-Disposition"] = r.headers["Content-Disposition"]
     return Response(r.content, status=r.status_code,
                     content_type=r.headers.get("Content-Type", "application/octet-stream"),
                     headers=headers)
+
+
+# ---------- comptage des adresses de a.txt ----------
+def read_addresses():
+    if not FILE.exists():
+        return []
+    seen, out = set(), []
+    for line in FILE.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and line.lower() not in seen:
+            seen.add(line.lower())
+            out.append(line)
+    return out
+
+
+def check_one(email):
+    try:
+        r = requests.post(f"{API}/check", json={"email": email}, timeout=20)
+    except requests.RequestException as e:
+        return {"error": f"réseau : {e.__class__.__name__}"}, 0
+    if r.status_code == 429:
+        return None, int(r.headers.get("Retry-After", 30))
+    if r.status_code == 403:
+        return {"error": "adresse non générée par temp.tf"}, 0
+    if r.status_code != 200:
+        return {"error": f"erreur {r.status_code}"}, 0
+    msgs = r.json().get("data", [])
+    archive(email, msgs)
+    last = msgs[0] if msgs else None
+    return {
+        "count": len(msgs),
+        "last_subject": last["subject"] if last else "",
+        "last_from": last["from"] if last else "",
+    }, 0
+
+
+def scan():
+    addresses = read_addresses()
+    with lock:
+        state.update(running=True, done=0, total=len(addresses), results={})
+    for email in addresses:
+        while True:
+            res, wait = check_one(email)
+            if res is not None:
+                break
+            time.sleep(wait)
+        with lock:
+            state["results"][email] = res
+            state["done"] += 1
+        time.sleep(DELAY)
+    with lock:
+        state["running"] = False
+
+
+@app.post("/api/scan")
+def start_scan():
+    with lock:
+        if state["running"]:
+            return jsonify(ok=False, error="déjà en cours"), 409
+    threading.Thread(target=scan, daemon=True).start()
+    return jsonify(ok=True)
+
+
+@app.get("/api/state")
+def get_state():
+    addresses = read_addresses()
+    with lock:
+        results = dict(state["results"])
+        rows = [{"email": a, **results.get(a, {})} for a in addresses]
+        return jsonify(
+            running=state["running"], done=state["done"], total=state["total"],
+            addresses=len(addresses),
+            total_msgs=sum(r.get("count", 0) for r in results.values()),
+            rows=rows,
+        )
 
 
 @app.get("/")
