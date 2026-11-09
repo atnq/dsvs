@@ -141,7 +141,6 @@ foot,.foot{display:block;padding:0 0 40px;color:var(--mut);font-size:.85rem}
     <button class="btn main" id="fetch" type="button">Relever la boîte</button>
     <label class="sw"><input type="checkbox" id="auto" checked>Relever toutes les 10 secondes</label>
   </div>
-  <div class="note" id="note" role="status"></div>
 
   <details class="opt"><summary>Choisir le type d'adresse</summary>
     <div class="grp"><b>Fournisseurs</b>
@@ -211,7 +210,7 @@ function opts(){
   if(prov.length)p.set("providers",prov.join(","));
   return p;
 }
-const note=t=>$("note").textContent=t||"";
+const note=()=>{};
 async function api(url,init){
   const r=await fetch(url,init); let j={};
   try{j=await r.json()}catch{}
